@@ -1,14 +1,15 @@
 # AWS_LAB_STEP_FUNCTIONS
 
 ### Purpose
-- Purpose of application is to demonstrate use of AWS step functions to handle lambda activity using conditional logic.
+- Purpose of repo is to demonstrate use of AWS step functions to handle lambda activity using conditional logic
 
 ### Description
 - Application pushes sample text file to s3 for use by AWS state machine.  Cloudformation is used to create a state machine and required lambda functions that will read the uploaded s3 file, perform some simple processing, and upload a new file to s3 (information on a Super Mario brother)
 
 ### Requirements
+- AWS account
 - AWS console access
-- Permission to use cloudformation to create project resources (lambda, s3, statemachine, iam roles, and iam policy)
+- Permission to use cloudformation to create aws resources
 - Access to terminal to run script (optional)
 
 ### Implementation
