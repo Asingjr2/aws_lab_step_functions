@@ -1,0 +1,4 @@
+---
+tasks:
+  test cfn
+  work on trigger or call to invoke execution of step function

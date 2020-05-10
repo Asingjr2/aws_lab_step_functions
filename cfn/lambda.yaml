@@ -1,0 +1,204 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Cloudfomration creating lambda role, policy, and functions
+
+Parameters:
+  DemoProjectStage:
+    Type: String
+    Description: Project stage for deployment
+  
+  Bucketname:
+    Type: String
+    Description: Bucket name for cloudformation s3 resource
+  
+  ReadFilePath:
+    Type: String
+    Description: File path to be read from s3
+    
+  WriteFilePath:
+    Type: String
+    Description: File path to be written to s3
+
+
+Resources:
+  DemoProjectSampleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action: 'sts:AssumeRole'
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+    
+  DemoProjectSamplePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectStage}-DemoProjectSamplePolicy
+      PolicyDocument:
+        Statement:
+          - 
+            Effect: "Allow"
+            Action:
+              - 's3:*'
+            Resource: "*"
+      Roles:
+        - !Ref DemoProjectSampleRole
+
+  ReadFileLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: read-file-lamba
+      Description: Lambda to read s3 bucket file
+      Handler: index.lambda_handler
+      Runtime: python3.6
+      Role: !GetAtt DemoProjectSampleRole.Arn
+      Environment:
+        Variables:
+          READFILEPATH: !Ref ReadFilePath
+       Code: 
+        ZipFile: |
+          import json
+          import boto3
+
+          def lambda_handler(event, context):
+              file_name = 'luigi.txt'
+              bucket_name = ${BucketName}
+
+              s3 = boto3.resource('s3')
+              obj = s3.Object(bucket_name, file_name)
+              body = obj.get()['Body'].read()
+              body_decoded = body.decode("utf-8") 
+              
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Hello from Lambda!'),
+                  'character_name': body_decoded
+              }
+      Tags:
+        - Key: Name
+          Value: read-file-lamba
+    
+  MarioWriteFileLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: mario-write-file-lamba
+      Description: Lambda to write s3 bucket file
+      Handler: index.lambda_handler
+      Runtime: python3.6
+      Role: !GetAtt DemoProjectSampleRole.Arn
+      Environment:
+        Variables:
+          WRITEFILEPATH: !Ref WriteFilePath 
+       Code: 
+        ZipFile: |
+          import json
+
+          import boto3
+
+
+          def lambda_handler(event, context):
+              file_name = 'mario.json'
+              temp_location = f'/tmp/{file_name}'
+              bucket_name = ${Bucketname}
+          
+              mario_info = {
+                  "Name" : "Mario",
+                  "First appearance":	"Donkey Kong (1981)",
+                  "Created by" : "Shigeru Miyamoto",
+                  "Designed by" : "Shigeru Miyamoto",
+                  "Nickname" : "Super Mario",
+                  "Gender"  : "Male",
+                  "Occupation" : "Plumber",
+                  "Relatives" :	"Luigi (twin brother)",
+                  "Origin" : "The Mushroom Kingdom",
+                  "Nationality" :	"Italian",
+              }
+              
+              with open(temp_location, 'a+') as f:
+                  f.write(json.dumps(mario_info))
+                  f.close()
+              
+              s3_client = boto3.client('s3')
+              try:
+                  response = s3_client.upload_file(temp_location, bucket_name, file_name)
+              except ClientError as e:
+                  logging.error(e)
+                  return False
+
+              return 'Uploaded new file'
+      Tags:
+        - Key: Name
+          Value: mario-write-file-lamba
+
+  LuigiWriteFileLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: luigi-write-file-lamba
+      Description: Lambda to write s3 bucket file
+      Handler: index.lambda_handler
+      Runtime: python3.6
+      Role: !GetAtt DemoProjectSampleRole.Arn
+      Environment:
+        Variables:
+          WRITEFILEPATH: !Ref WriteFilePath 
+       Code: 
+        ZipFile: |
+          import json
+
+          import boto3
+
+
+          def lambda_handler(event, context):
+              file_name = 'luigi.json'
+              temp_location = f'/tmp/{file_name}'
+              bucket_name = ${Bucketname}
+              
+              luigi_info = {
+                  "Name" : "Luigi",
+                  "First appearance":	"Mario Bros. (1983)",
+                  "Created by" : "Shigeru Miyamoto",
+                  "Designed by" : "Shigeru Miyamoto",
+                  "Nickname" : "Super Mario",
+                  "Gender"  : "Male",
+                  "Occupation" : "Plumber",
+                  "Relatives" :	"Mario (twin brother)",
+                  "Origin" : "The Mushroom Kingdom",
+                  "Nationality" :	"Italian"
+              }
+              
+              with open(temp_location, 'a+') as f:
+                  f.write(json.dumps(luigi_info))
+                  f.close()
+              
+              s3_client = boto3.client('s3')
+              try:
+                  response = s3_client.upload_file(temp_location, bucket_name, file_name)
+              except ClientError as e:
+                  logging.error(e)
+                  return False
+
+              return 'Uploaded new file'
+      Tags:
+        - Key: Name
+          Value: luigi-write-file-lamba
+
+
+Outputs:
+  ReadFileLambdaOP:
+    Value: !Ref ReadFileLambda
+    Export:
+      Name: ReadFileLambdaOutput
+
+  MarioWriteFileLambdaOP:
+    Value: !Ref MarioWriteFileLambda
+    Export:
+      Name:  MarioWriteFileLambdaOutput
+  
+  LuigiWriteFileLambdaOP:
+    Value: !Ref LuigiWriteFileLambda
+    Export:
+      Name:  LuigiWriteFileLambdaOutput

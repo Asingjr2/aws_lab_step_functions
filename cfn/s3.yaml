@@ -1,0 +1,30 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Cloudformation creates s3 bucket
+
+Parameters:
+  Bucketname:
+    Type: String
+    Description: Bucket name for cloudformation s3 resource
+
+
+Resources:
+  DemoProjectBucket:
+    Type: AWS::S3::Bucket
+    Propteties:
+      BucketName: !Ref Bucketname
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Name
+          Value: !Ref Bucketname
+
+
+Outputs:
+  DemoProjectBucketOP:
+    Value: !Ref DemoProjectBucket
+    Export:
+      Name: DemoProjectBucketOutput

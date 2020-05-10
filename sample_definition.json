@@ -1,0 +1,36 @@
+{
+    "StartAt": "ChoiceMarioOrLuigiLambda",
+    "States": {
+
+      "ChoiceMarioOrLuigiLambda": {
+        "Type": "Choice",
+        "Choices": [
+            {
+                "Variable": "$.character_name",
+                "StringEquals": "Mario",
+                "Next": "MarioLambda"
+            },
+            {
+                "Variable": "$.charactoer_name",
+                "StringEquals": "Luigi",
+                "Next": "LuigiLambda"
+            }
+        ],
+        "Default": "ErrorState"
+      },
+      "MarioLambda": {
+        "Type": "Task",
+        "Resource": "placeholder_mario_lambda",
+        "End": true
+      },
+      "LuigiLambda": {
+        "Type": "Task",
+        "Resource": "placeholder_luigi_lambda",
+        "End": true
+      },
+      "ErrorState": {
+        "Type": "Fail",
+        "Cause": "No Matches!"
+      }
+    }
+  }

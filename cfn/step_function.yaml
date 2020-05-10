@@ -1,0 +1,105 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Cloudformation creates statemachine
+
+
+Parameters:
+  MarioLambda:
+    Type: String
+    Desription: Mario lambda arn
+  
+  LuigiLambda:
+    Type: String
+    Desription: Luigi lambda arn
+
+
+Resources:
+  DemoProjectSampleStateMachineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action: 'sts:AssumeRole'
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+  
+  DemoProjectSampleStateMachinePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectStage}-DemoProjectSamplePolicy
+      PolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - 'lambda:*'
+              - 's3:*'
+            Resource: "*"
+      Roles:
+        - !Ref DemoProjectSampleRole
+
+    
+  DemoProjectSampleStateMachinePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectStage}-DemoProjectSamplePolicy
+      PolicyDocument:
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - 'ec2:*'
+              - 's3:*'
+              - 'logs:*'
+            Resource: "*"
+      Roles:
+        - !Ref DemoProjectSampleRole
+  DemoProjectStateMachine:
+    Type: AWS::StepFunction::StateMachine
+    Properties:
+      StateMachineName: demo-project-state-machine
+      StateMachine:Type: STANDARD
+      RoleArn: !GetAtt DemoProjectSampleStateMachineRole.Arn
+      DefinitionString:
+        !Sub |
+          {
+            "StartAt": "ChoiceMarioOrLuigiLambda",
+            "States": {
+
+              "ChoiceMarioOrLuigiLambda": {
+                "Type": "Choice",
+                "Choices": [
+                    {
+                        "Variable": "$.character_name",
+                        "StringEquals": "Mario",
+                        "Next": "MarioLambda"
+                    },
+                    {
+                        "Variable": "$.charactoer_name",
+                        "StringEquals": "Luigi",
+                        "Next": "LuigiLambda"
+                    }
+                ],
+                "Default": "ErrorState"
+              },
+              "MarioLambda": {
+                "Type": "Task",
+                "Resource": "${MarioLambda}",
+                "End": true
+              },
+              "LuigiLambda": {
+                "Type": "Task",
+                "Resource": "${LuigiLambda},
+                "End": true
+              },
+              "ErrorState": {
+                "Type": "Fail",
+                "Cause": "No Matches!"
+              }
+            }
+          }
+    Tags:
+      - Key: Name
+        Value: demp-project-state-machine
